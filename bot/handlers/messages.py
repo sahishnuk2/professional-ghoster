@@ -19,9 +19,18 @@ async def ghost_command(message: Message):
     user = get_or_create_user(telegram_id, tele_handle, user_name)
     group = get_or_create_group(telegram_chat_id, chat_name)
 
+    if not user or not group:
+        await message.answer("Error: Could not access database")
+        return
+
     # Get recent messages and generate reply
-    messages = get_recent_messages(group["id"])
-    reply = generate_reply(messages, user_name)
+    recent_messages = get_recent_messages(group["id"])
+
+    if not recent_messages:
+        await message.answer("No messages to analyze yet!")
+        return
+
+    reply = generate_reply(recent_messages, user_name)
 
     # Save the ghost reply as the user's message
     database_save_message(group["id"], user["id"], reply)
@@ -30,6 +39,10 @@ async def ghost_command(message: Message):
 
 @router.message()
 async def save_message(message: Message):
+    # Skip if no text (photos, stickers, etc.)
+    if not message.text:
+        return
+
     telegram_id = message.from_user.id
     tele_handle = message.from_user.username
     display_name = message.from_user.first_name
@@ -41,7 +54,8 @@ async def save_message(message: Message):
 
     sender = get_or_create_user(telegram_id, tele_handle, display_name)
     group = get_or_create_group(telegram_chat_id, chat_name)
-    database_save_message(group["id"], sender["id"], message_text)
-    print(f"{message.from_user.first_name}: {message.text}")
-    # await message.reply(f"Group {group["id"]} || User {sender["id"]}")
+
+    if sender and group:
+        database_save_message(group["id"], sender["id"], message_text)
+        print(f"{message.from_user.first_name}: {message.text}")
 
