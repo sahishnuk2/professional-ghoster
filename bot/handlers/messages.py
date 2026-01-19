@@ -1,4 +1,4 @@
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message
 from bot.services.database import get_or_create_user, get_or_create_group, database_save_message, get_recent_messages
@@ -6,7 +6,7 @@ from bot.services.llm import generate_reply
 
 router = Router()
 
-@router.message(Command("ghost"))
+@router.message(F.text.contains("/ghost"))
 async def ghost_command(message: Message):
     user_name = message.from_user.first_name
     telegram_id = message.from_user.id
